@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lecture Video to PDF Converter</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .upload-container {
+            border: 2px dashed #ccc;
+            padding: 40px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .progress {
+            display: none;
+            margin: 20px 0;
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.5s;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin: 20px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lecture Video to PDF Converter</h1>
+    <div class="upload-container">
+        <form id="uploadForm">
+            <input type="file" name="file" accept=".mp4,.mov,.avi" required><br><br>
+            <button type="submit" class="button" id="submitBtn">Convert to PDF</button>
+        </form>
+        <div class="progress">
+            <div class="progress-bar"></div>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#uploadForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                var formData = new FormData(this);
+                $('#submitBtn').prop('disabled', true);
+                $('.progress').show();
+                $('#status').text('Uploading...');
+
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    xhr: function() {
+                        var xhr = new window.XMLHttpRequest();
+                        xhr.upload.addEventListener('progress', function(e) {
+                            if (e.lengthComputable) {
+                                var percent = Math.round((e.loaded / e.total) * 100);
+                                $('.progress-bar').css('width', percent + '%');
+                            }
+                        });
+                        return xhr;
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#status').text('Processing complete! Downloading PDF...');
+                            // Here we'll eventually trigger PDF download
+                        } else {
+                            $('#status').text('Error: ' + response.error);
+                        }
+                    },
+                    error: function() {
+                        $('#status').text('An error occurred during upload');
+                    },
+                    complete: function() {
+                        $('#submitBtn').prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
